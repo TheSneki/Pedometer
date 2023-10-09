@@ -1,0 +1,105 @@
+import datetime as dt
+
+FORMAT = "%H:%M:%S"
+WEIGHT = 75  # Вес.
+HEIGHT = 175  # Рост.
+K_1 = 0.035  # Коэффициент для подсчета калорий.
+K_2 = 0.029  # Коэффициент для подсчета калорий.
+STEP_M = 0.65  # Длина шага в метрах.
+
+storage_data = {}  # Словарь для хранения полученных данных.
+
+def check_correct_data(data):
+    """Проверка корректности полученного пакета."""
+    if len(data) != 2:
+        return False
+    if None in data or '' in data:
+        return False
+    return True
+
+def check_correct_time(time):
+    """Проверка корректности параметра времени."""
+    if not storage_data:
+        return True
+
+    max_time_str = max(storage_data.keys(), default='00:00:00')
+    max_time = dt.datetime.strptime(max_time_str, FORMAT).time()
+
+    return time >= max_time  # Изменили знак с <= на >=
+
+def get_step_day(steps):
+    """Получить количество пройденных шагов за этот день."""
+    total_steps = sum(steps)
+    return total_steps
+
+def get_distance(steps):
+    """Получить дистанцию пройденного пути в км."""
+    dist_m = sum(steps) * STEP_M
+    dist_km = dist_m / 1000  # Разделить на 1000 для получения километров
+    return dist_km
+
+def get_spent_calories(dist, current_time):
+    """Получить значения потраченных калорий."""
+    hours = current_time.hour + current_time.minute / 60 + current_time.second / 3600
+    spent_calories = (K_1 * WEIGHT + ((dist / hours) ** 2 / HEIGHT) * (K_2 * WEIGHT)) * 2 * 60
+    return spent_calories
+
+def get_achievement(dist_km):
+    """Получить поздравления за пройденную дистанцию."""
+    if dist_km >= 6.5:
+        achievement = 'Отличный результат! Цель достигнута.'
+    elif dist_km >= 3.9:
+        achievement = 'Неплохо! День был продуктивным.'
+    elif dist_km >= 2:
+        achievement = 'Маловато, но завтра наверстаем!'
+    else:
+        achievement = 'Лежать тоже полезно. Главное — участие, а не победа!'
+    return achievement
+
+def show_message(message):
+    """Отобразить сообщение на экране."""
+    print(message)
+    print()
+
+def accept_package(data):
+    """Обработать пакет данных."""
+    if not check_correct_data(data):
+        return 'Некорректный пакет'
+    
+    pack_time_str, steps = data
+    
+    try:
+        pack_time = dt.datetime.strptime(pack_time_str, FORMAT).time()
+    except ValueError:
+        return 'Некорректное значение времени'
+    
+    if not check_correct_time(pack_time):
+        return 'Некорректное значение времени'
+
+    dist = get_distance([steps])
+    spent_calories = get_spent_calories(dist, pack_time)
+    achievement = get_achievement(dist)
+    pack_time_str = pack_time.strftime("%H:%M:%S")
+    show_message(f"""
+Время: {pack_time_str}.
+Количество шагов за сегодня: {steps}.
+Дистанция составила {dist:.2f} км.
+Вы сожгли {spent_calories:.2f} ккал.
+{achievement}
+    """)
+
+    storage_data[pack_time_str] = (steps, dist, spent_calories, achievement)
+    return storage_data
+
+# Данные для самопроверки.Не удаляйте их.
+package_0 = ('02:00:01', 505)
+package_1 = (None, 15505)
+package_2 = ('09:36:02', 15000)
+package_3 = ('09:36:02', 9000)
+package_4 = ('08:01:02', 7600)
+
+accept_package(package_0)
+accept_package(package_1)
+accept_package(package_2)
+accept_package(package_3)
+accept_package(package_4)
